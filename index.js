@@ -13,7 +13,11 @@ import router from "./routes";
 mongoose.Promise = global.Promise;
 const dbUrl = `mongodb://localhost:27017/dbsistema`;
 mongoose
-  .connect(dbUrl, { useCreateIndex: true, useNewUrlParser: true })
+  .connect(dbUrl, {
+    useCreateIndex: true,
+    useNewUrlParser: true,
+    useFindAndModify: false
+  })
   .then(mongoose => console.log("Conectando a la BD en el puerto 27017"))
   .catch(err => console.log(err));
 

@@ -1,10 +1,10 @@
 import models from "../models";
-const Categoria = models.Categoria;
+const Articulo = models.Articulo;
 
 export default {
   add: async (req, res, next) => {
     try {
-      const data = await Categoria.create(req.body);
+      const data = await Articulo.create(req.body);
       res.status(200).json(data);
     } catch (e) {
       res.status(500).send({
@@ -15,7 +15,10 @@ export default {
   },
   query: async (req, res, next) => {
     try {
-      const data = await Categoria.findOne({ _id: req.query._id });
+      const data = await Articulo.findOne({ _id: req.query._id }).populate(
+        "categoria",
+        { nombre: 1 }
+      );
       if (!data) {
         res.status(404).send({
           message: "El registro no existe"
@@ -33,7 +36,7 @@ export default {
   list: async (req, res, next) => {
     try {
       let valor = req.query.valor;
-      const data = await Categoria.find(
+      const data = await Articulo.find(
         {
           $or: [
             { nombre: new RegExp(valor, "i") },
@@ -41,7 +44,9 @@ export default {
           ]
         },
         { createdAt: 0 }
-      ).sort({ createdAt: -1 });
+      )
+        .populate("categoria", { nombre: 1 })
+        .sort({ createdAt: -1 });
       res.status(200).json(data);
     } catch (e) {
       res.status(500).send({
@@ -51,11 +56,18 @@ export default {
     }
   },
   update: async (req, res, next) => {
-    const { _id, nombre, descripcion } = req.body;
+    const {
+      categoria,
+      codigo,
+      nombre,
+      descripcion,
+      precio_venta,
+      stock
+    } = req.body;
     try {
-      const data = await models.Categoria.findByIdAndUpdate(
-        { _id },
-        { nombre, descripcion }
+      const data = await models.Articulo.findByIdAndUpdate(
+        { _id: req.body._id },
+        { categoria, codigo, nombre, descripcion, precio_venta, stock }
       );
       if (!data) {
         res.status(404).send({
@@ -73,7 +85,7 @@ export default {
   },
   remove: async (req, res, next) => {
     try {
-      const data = await models.Categoria.findByIdAndDelete({
+      const data = await models.Articulo.findByIdAndDelete({
         _id: req.body._id
       });
       res.status(200).json(data);
@@ -86,7 +98,7 @@ export default {
   },
   activate: async (req, res, next) => {
     try {
-      const data = await Categoria.findByIdAndUpdate(
+      const data = await Articulo.findByIdAndUpdate(
         { _id: req.body._id },
         { estado: 1 }
       );
@@ -100,7 +112,7 @@ export default {
   },
   deactivate: async (req, res, next) => {
     try {
-      const data = await Categoria.findByIdAndUpdate(
+      const data = await Articulo.findByIdAndUpdate(
         { _id: req.body._id },
         { estado: 0 }
       );
