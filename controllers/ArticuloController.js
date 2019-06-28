@@ -56,7 +56,7 @@ export default {
     }
   },
   update: async (req, res, next) => {
-    const {
+    let {
       categoria,
       codigo,
       nombre,
