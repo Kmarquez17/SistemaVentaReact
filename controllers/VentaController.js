@@ -1,43 +1,47 @@
 import models from "../models";
-const Articulo = models.Articulo;
+const Venta = models.Venta;
+
+import stock from "../services/stock";
+
+// async function aumentarStock(idArticulo, cantidad) {
+//   let { stock } = await Articulo.findOne({ _id: idArticulo });
+//   let nStock = parseInt(stock) + parseInt(cantidad);
+//   const data = await Articulo.findByIdAndUpdate(
+//     { _id: idArticulo },
+//     { stock: nStock }
+//   );
+// }
+// async function disminuirStock(idArticulo, cantidad) {
+//   let { stock } = await Articulo.findOne({ _id: idArticulo });
+//   let nStock = parseInt(stock - cantidad);
+//   const data = await Articulo.findByIdAndUpdate(
+//     { _id: idArticulo },
+//     { stock: nStock }
+//   );
+// }
 
 export default {
   add: async (req, res, next) => {
     try {
-      const data = await Articulo.create(req.body);
+      const data = await models.Venta.create(req.body);
+      //Actualizar stock
+      let detalles = req.body.detalles;
+      detalles.map(function(x) {
+        stock.disminuirStock(x._id, x.cantidad);
+      });
       res.status(200).json(data);
     } catch (e) {
       res.status(500).send({
-        message: "Ocurrio un error"
+        message: "Ocurrió un error"
       });
       next(e);
     }
   },
   query: async (req, res, next) => {
     try {
-      const data = await Articulo.findOne({ _id: req.query._id }).populate(
-        "categoria",
-        { nombre: 1 }
-      );
-      if (!data) {
-        res.status(404).send({
-          message: "El registro no existe"
-        });
-      } else {
-        res.status(200).json(data);
-      }
-    } catch (e) {
-      res.status(500).send({
-        message: "Ocurrio un error"
-      });
-      next(e);
-    }
-  },
-  queryCodigo: async (req, res, next) => {
-    try {
-      const data = await Articulo.findOne({
-        codigo: req.query.codigo
-      }).populate("categoria", { nombre: 1 });
+      const data = await Venta.findOne({ _id: req.query._id })
+        .populate("usuario", { nombre: 1 })
+        .populate("persona", { nombre: 1 });
       if (!data) {
         res.status(404).send({
           message: "El registro no existe"
@@ -55,16 +59,17 @@ export default {
   list: async (req, res, next) => {
     try {
       let valor = req.query.valor;
-      const data = await Articulo.find(
+      const data = await Venta.find(
         {
           $or: [
-            { nombre: new RegExp(valor, "i") },
-            { descripcion: new RegExp(valor, "i") }
+            { num_comprobante: new RegExp(valor, "i") },
+            { serie_comprobante: new RegExp(valor, "i") }
           ]
         },
         { createdAt: 0 }
       )
-        .populate("categoria", { nombre: 1 })
+        .populate("usuario", { nombre: 1 })
+        .populate("persona", { nombre: 1 })
         .sort({ createdAt: -1 });
       res.status(200).json(data);
     } catch (e) {
@@ -74,19 +79,13 @@ export default {
       next(e);
     }
   },
+  /*
   update: async (req, res, next) => {
-    let {
-      categoria,
-      codigo,
-      nombre,
-      descripcion,
-      precio_venta,
-      stock
-    } = req.body;
+    let { _id, nombre, descripcion } = req.body;
     try {
-      const data = await models.Articulo.findByIdAndUpdate(
-        { _id: req.body._id },
-        { categoria, codigo, nombre, descripcion, precio_venta, stock }
+      const data = await models.Venta.findByIdAndUpdate(
+        { _id },
+        { nombre, descripcion }
       );
       if (!data) {
         res.status(404).send({
@@ -104,7 +103,7 @@ export default {
   },
   remove: async (req, res, next) => {
     try {
-      const data = await models.Articulo.findByIdAndDelete({
+      const data = await models.Venta.findByIdAndDelete({
         _id: req.body._id
       });
       res.status(200).json(data);
@@ -114,13 +113,18 @@ export default {
       });
       next(e);
     }
-  },
+  },*/
   activate: async (req, res, next) => {
     try {
-      const data = await Articulo.findByIdAndUpdate(
+      const data = await Venta.findByIdAndUpdate(
         { _id: req.body._id },
         { estado: 1 }
       );
+      //Actualizar stock
+      let detalles = data.detalles;
+      detalles.map(function(x) {
+        stock.disminuirStock(x._id, x.cantidad);
+      });
       res.status(200).send(data);
     } catch (e) {
       res.status(500).send({
@@ -131,10 +135,17 @@ export default {
   },
   deactivate: async (req, res, next) => {
     try {
-      const data = await Articulo.findByIdAndUpdate(
+      const data = await Venta.findByIdAndUpdate(
         { _id: req.body._id },
         { estado: 0 }
       );
+
+      //Actualizar stock
+      let detalles = data.detalles;
+      detalles.map(function(x) {
+        stock.aumentarStock(x._id, x.cantidad);
+      });
+
       res.status(200).send(data);
     } catch (e) {
       res.status(500).send({

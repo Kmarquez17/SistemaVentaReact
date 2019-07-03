@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import models from "../models";
-
 let claveSecreta = "clavesecretaparagenerartoken";
 
 const checkToken = async token => {
