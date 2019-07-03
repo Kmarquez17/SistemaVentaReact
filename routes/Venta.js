@@ -7,13 +7,10 @@ const router = routerx();
 router.post("/add", auth.verificarVendedor, VentaController.add);
 router.get("/query", auth.verificarVendedor, VentaController.query);
 router.get("/list", auth.verificarVendedor, VentaController.list);
+router.get("/graficos", auth.verificarUsuario, VentaController.graficoMeses);
 /*router.put("/update", auth.verificarVendedor, VentaController.update);
 router.delete("/remove", auth.verificarVendedor, VentaController.remove);*/
 router.put("/activate", auth.verificarVendedor, VentaController.activate);
-router.put(
-  "/deactivate",
-  auth.verificarVendedor,
-  VentaController.deactivate
-);
+router.put("/deactivate", auth.verificarVendedor, VentaController.deactivate);
 
 export default router;

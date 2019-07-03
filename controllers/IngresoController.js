@@ -1,23 +1,6 @@
 import models from "../models";
+import stock from "../services/stock";
 const Ingreso = models.Ingreso;
-const Articulo = models.Articulo;
-
-async function aumentarStock(idArticulo, cantidad) {
-  let { stock } = await Articulo.findOne({ _id: idArticulo });
-  let nStock = parseInt(stock) + parseInt(cantidad);
-  const data = await Articulo.findByIdAndUpdate(
-    { _id: idArticulo },
-    { stock: nStock }
-  );
-}
-async function disminuirStock(idArticulo, cantidad) {
-  let { stock } = await Articulo.findOne({ _id: idArticulo });
-  let nStock = parseInt(stock - cantidad);
-  const data = await Articulo.findByIdAndUpdate(
-    { _id: idArticulo },
-    { stock: nStock }
-  );
-}
 
 export default {
   add: async (req, res, next) => {
@@ -26,7 +9,7 @@ export default {
       //Actualizar stock
       let detalles = req.body.detalles;
       detalles.map(function(x) {
-        aumentarStock(x._id, x.cantidad);
+        stock.aumentarStock(x._id, x.cantidad);
       });
       res.status(200).json(data);
     } catch (e) {
@@ -122,7 +105,7 @@ export default {
       //Actualizar stock
       let detalles = data.detalles;
       detalles.map(function(x) {
-        aumentarStock(x._id, x.cantidad);
+        stock.aumentarStock(x._id, x.cantidad);
       });
       res.status(200).send(data);
     } catch (e) {
@@ -142,13 +125,42 @@ export default {
       //Actualizar stock
       let detalles = data.detalles;
       detalles.map(function(x) {
-        disminuirStock(x._id, x.cantidad);
+        stock.disminuirStock(x._id, x.cantidad);
       });
 
       res.status(200).send(data);
     } catch (e) {
       res.status(500).send({
         message: "Ocurrio un error"
+      });
+      next(e);
+    }
+  },
+  graficoMeses: async (req, res, next) => {
+    try {
+      const data = await Ingreso.aggregate([
+        {
+          $group: {
+            _id: {
+              mes: { $month: "$createdAt" },
+              year: { $year: "$createdAt" }
+            },
+            total: { $sum: "$total" },
+            numero: { $sum: 1 }
+          }
+        },
+        {
+          $sort: {
+            "_id.year": -1,
+            "_id.mes": -1
+          }
+        }
+      ]).limit(12);
+
+      res.status(200).json(data);
+    } catch (e) {
+      res.status(500).send({
+        message: "Ocurrió un error"
       });
       next(e);
     }
