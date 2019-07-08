@@ -153,7 +153,7 @@ export default {
         let match = await bcrypt.compare(password, user.password);
         if (match) {
           let tokenReturn = await token.encode(user._id);
-          res.status(200).json({ user, tokenReturn });
+          res.status(200).json({ user, token: tokenReturn });
         } else {
           res.status(404).send({
             message: "Password Incorrecto"
